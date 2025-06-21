@@ -51,9 +51,24 @@ void loop() {
   keyScan();
   detectZeroHold();
   checkModeSwitch();
+  debugSwitch(); 
   processKeyBuffer();
   handleDisplay();
   handleModeDisplay();
+}
+
+void debugSwitch() {
+  static unsigned long lastDebug = 0;
+  
+  // Print switch state every 500ms
+  if (millis() - lastDebug > 500) {
+    bool switchState = digitalRead(MODE_SWITCH_PIN);
+    Serial.print("Switch pin 30: ");
+    Serial.print(switchState ? "HIGH" : "LOW");
+    Serial.print(" | Current mode: ");
+    Serial.println(currentMode == MODE_CALCULATOR ? "CALC" : "NUMPAD");
+    lastDebug = millis();
+  }
 }
 
 void checkModeSwitch() {
@@ -65,31 +80,33 @@ void checkModeSwitch() {
   }
   
   if ((millis() - lastSwitchTime) > DEBOUNCE_DELAY) {
-    if (currentSwitchState != lastSwitchState) {
-      // Switch state has changed and is stable
-      if (currentSwitchState == LOW) {
-        // Switch is pressed (pulled to ground)
-        currentMode = MODE_NUMBERPAD;
+    // The switch state has been stable for the debounce period
+    // Now check if the stable state is different from current mode
+    
+    Mode newMode;
+    if (currentSwitchState == LOW) {
+      // Switch is pressed (pulled to ground)
+      newMode = MODE_NUMBERPAD;
+    } else {
+      // Switch is released (pulled up)
+      newMode = MODE_CALCULATOR;
+    }
+    
+    // Only update if mode actually changed
+    if (newMode != currentMode) {
+      currentMode = newMode;
+      
+      Serial.print("Mode changed to: ");
+      Serial.println(currentMode == MODE_CALCULATOR ? "Calculator" : "Numberpad");
+      
+      if (currentMode == MODE_CALCULATOR) {
+        drawInitialDisplay();
+        stopNumberpadAdvertising(); // Stop advertising in calculator mode
       } else {
-        // Switch is released (pulled up)
-        currentMode = MODE_CALCULATOR;
+        startNumberpadAdvertising(); // Start advertising in numberpad mode
       }
       
-      // If mode changed, update display and BLE advertising
-      if (currentMode != lastMode) {
-        Serial.print("Mode changed to: ");
-        Serial.println(currentMode == MODE_CALCULATOR ? "Calculator" : "Numberpad");
-        
-        if (currentMode == MODE_CALCULATOR) {
-          drawInitialDisplay();
-          stopNumberpadAdvertising(); // Stop advertising in calculator mode
-        } else {
-          startNumberpadAdvertising(); // Start advertising in numberpad mode
-        }
-        
-        displayNeedsUpdate = true;
-        lastMode = currentMode;
-      }
+      displayNeedsUpdate = true;
     }
   }
   

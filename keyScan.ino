@@ -13,7 +13,7 @@ const uint8_t rowPins[5] = { 31, 11, 7, 15, 16 };
 
 // Keymap
 const char* keymap[5][5] = {
-  { "AC", ">", "x/y", "/", "Del" },
+  { "AC", "x/y", ">", "/", "Del" },
   { "7", "8", "9", "x", "MM" },
   { "4", "5", "6", "-", "round" },
   { "1", "2", "3", "+", "return" },
