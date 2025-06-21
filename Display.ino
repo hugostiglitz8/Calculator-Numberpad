@@ -35,7 +35,7 @@ String      lastDisplayAlternate = "";
 bool        displayNeedsUpdate   = false;
 
 extern Adafruit_ILI9341 tft;
-extern Mode lastMode;   // Add this line if it's not already declared elsewhere
+
 
 
 #define TFT_CS   27
@@ -47,10 +47,11 @@ Adafruit_ILI9341 tft(TFT_CS, TFT_DC, TFT_RST);
 void handleModeDisplay() {
   static unsigned long lastModeUpdate = 0;
   static bool modeDisplayVisible = false;
+  static Mode lastDisplayedMode = MODE_CALCULATOR;
   
   // Show mode indicator for 2 seconds after mode change
-  if (currentMode != lastMode || (millis() - lastModeUpdate < 2000)) {
-    if (!modeDisplayVisible || currentMode != lastMode) {
+  if (currentMode != lastDisplayedMode || (millis() - lastModeUpdate < 2000)) {
+    if (!modeDisplayVisible || currentMode != lastDisplayedMode) {
       // Draw mode indicator
       tft.fillRect(220, 5, 95, 20, ILI9341_BLACK);
       tft.setFont();
@@ -68,6 +69,7 @@ void handleModeDisplay() {
       
       modeDisplayVisible = true;
       lastModeUpdate = millis();
+      lastDisplayedMode = currentMode;
     }
   } else if (modeDisplayVisible) {
     // Clear mode indicator

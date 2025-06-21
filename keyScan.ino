@@ -1,11 +1,9 @@
 //keyScan.ino
 
-
 #include "Keypad.h"
 
 // ── Mode (shared) ──
 Mode currentMode = MODE_CALCULATOR;
-
 
 // Keypad matrix pins
 const uint8_t colPins[5] = { 2, 3, 4, 28, 5 };
@@ -13,7 +11,7 @@ const uint8_t rowPins[5] = { 31, 11, 7, 15, 16 };
 
 // Keymap
 const char* keymap[5][5] = {
-  { "AC", "x/y", ">", "/", "Del" },
+  { "AC", ">", "x/y", "/", "Del" },
   { "7", "8", "9", "x", "MM" },
   { "4", "5", "6", "-", "round" },
   { "1", "2", "3", "+", "return" },
@@ -28,12 +26,17 @@ volatile uint8_t  keyHead = 0, keyTail = 0;
 unsigned long zeroPressStart = 0;
 bool          zeroPressed    = false;
 bool          zeroHoldActive = false;
-const unsigned long zeroHoldThreshold = 500;  // ms
+const unsigned long zeroHoldThreshold = 200;  // ms
+
+// ── Slash-hold state ──
+unsigned long slashPressStart = 0;
+bool          slashPressed    = false;
+bool          slashHoldActive = false;
+const unsigned long slashHoldThreshold = 200;  // ms
 
 // ── Debounce timing ──
 volatile uint32_t lastKeyTime[5][5] = { {0} };
 const uint32_t    keyDebounceMs     = 5;
-
 
 // ── Keypad init ──
 void initKeypad() {
@@ -43,7 +46,6 @@ void initKeypad() {
     pinMode(colPins[i], INPUT_PULLUP);
   }
 }
-
 
 // ── Matrix scan ──
 void keyScan() {
@@ -55,13 +57,20 @@ void keyScan() {
       bool pressed = !digitalRead(colPins[c]);
       // PRESS edge
       if (pressed && !lastState[r][c]) {
+        // Zero key hold detection
         if (r == 4 && (c == 0 || c == 1)) {
           zeroPressed    = true;
           zeroPressStart = millis();
-        } else {
+        }
+        // Slash key hold detection (row 0, col 3)
+        else if (r == 0 && c == 3) {
+          slashPressed    = true;
+          slashPressStart = millis();
+        }
+        // Regular key press
+        else {
           uint8_t nh = (keyHead + 1) % KEY_BUFFER_SIZE;
           if (nh != keyTail) {
-            // explicit assignment because keyBuffer is volatile
             keyBuffer[keyHead].row = r;
             keyBuffer[keyHead].col = c;
             keyHead = nh;
@@ -71,6 +80,7 @@ void keyScan() {
       }
       // RELEASE edge
       if (!pressed && lastState[r][c]) {
+        // Zero key release
         if (r == 4 && (c == 0 || c == 1)) {
           unsigned long held = millis() - zeroPressStart;
           if (held < zeroHoldThreshold) {
@@ -83,6 +93,21 @@ void keyScan() {
           }
           zeroPressed = false;
         }
+        // Slash key release
+        else if (r == 0 && c == 3) {
+          unsigned long held = millis() - slashPressStart;
+          if (held < slashHoldThreshold) {
+            // Short press - send normal slash
+            uint8_t nh = (keyHead + 1) % KEY_BUFFER_SIZE;
+            if (nh != keyTail) {
+              keyBuffer[keyHead].row = r;
+              keyBuffer[keyHead].col = c;
+              keyHead = nh;
+            }
+          }
+          slashPressed = false;
+          slashHoldActive = false; // Reset shift mode on release
+        }
         lastKeyTime[r][c] = millis();
       }
       lastState[r][c] = pressed;
@@ -90,8 +115,6 @@ void keyScan() {
     digitalWrite(rowPins[r], HIGH);
   }
 }
-
-
 
 // ── Zero Long-hold detector ──
 void detectZeroHold() {
@@ -101,10 +124,14 @@ void detectZeroHold() {
   }
 }
 
-
-
-
-
+// ── Slash Long-hold detector ──
+void detectSlashHold() {
+  if (slashPressed && !slashHoldActive
+      && millis() - slashPressStart > slashHoldThreshold) {
+    slashHoldActive = true;
+    Serial.println("Shift mode activated");
+  }
+}
 
 // --- consume & dispatch buffered key events ---
 void processKeyBuffer() {

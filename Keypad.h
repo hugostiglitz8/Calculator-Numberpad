@@ -28,6 +28,12 @@ extern bool           zeroPressed;
 extern bool           zeroHoldActive;
 extern const unsigned long zeroHoldThreshold;
 
+// ── Slash-hold state (for shift mode) ──
+extern unsigned long  slashPressStart;
+extern bool           slashPressed;
+extern bool           slashHoldActive;
+extern const unsigned long slashHoldThreshold;
+
 // ── Debounce timing ──
 extern volatile uint32_t lastKeyTime[5][5];
 extern const uint32_t    keyDebounceMs;
@@ -43,6 +49,7 @@ extern const uint16_t backgroundColor;
 void initKeypad();
 void keyScan();
 void detectZeroHold();
+void detectSlashHold();
 void processKeyBuffer();
 
 // ── Mode-specific handlers ──

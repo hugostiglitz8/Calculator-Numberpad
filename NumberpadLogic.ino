@@ -101,6 +101,11 @@ void handleNumberpadMode(const char* key) {
         if ((r == 1 && c == 4) || (r == 2 && c == 4)) { // MM or round keys
           modifier = KEYBOARD_MODIFIER_LEFTGUI; // CMD key on Mac / Windows key on PC
         }
+        // Special handling for arrow keys when slash is held (shift mode)
+        else if (slashHoldActive && (strcmp(key, ">") == 0 || strcmp(key, "x/y") == 0)) {
+          modifier = KEYBOARD_MODIFIER_LEFTSHIFT; // Add shift to arrow keys
+          Serial.print("Shift + ");
+        }
         break;
       }
     }
@@ -111,7 +116,8 @@ void handleNumberpadMode(const char* key) {
   if (hidCode != 0) {
     Serial.print("Sending HID key: ");
     Serial.print(key);
-    if (modifier != 0) Serial.print(" (with CMD)");
+    if (modifier == KEYBOARD_MODIFIER_LEFTGUI) Serial.print(" (with CMD)");
+    if (modifier == KEYBOARD_MODIFIER_LEFTSHIFT) Serial.print(" (with SHIFT)");
     Serial.println();
     
     // Create keycode array (up to 6 keys can be pressed simultaneously)
