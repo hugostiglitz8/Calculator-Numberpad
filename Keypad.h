@@ -32,10 +32,24 @@ extern const unsigned long zeroHoldThreshold;
 extern volatile uint32_t lastKeyTime[5][5];
 extern const uint32_t    keyDebounceMs;
 
+// ── Calculator state (from CalculatorLogic.ino) ──
+extern String calcLine, historyLine, alternateDisplay;
+extern bool justCalculated, usedFractionEntry, displayNeedsUpdate;
+
+// ── Display constants (from Display.ino) ──
+extern const uint16_t backgroundColor;
+
 // ── Functions ──
 void initKeypad();
 void keyScan();
 void detectZeroHold();
 void processKeyBuffer();
+
+// ── Mode-specific handlers ──
+void handleCalculatorMode(const char* key);
+void handleNumberpadMode(const char* key);
+void initNumberpad();
+void startNumberpadAdvertising();
+void stopNumberpadAdvertising();
 
 #endif // KEYPAD_H

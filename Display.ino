@@ -4,6 +4,7 @@
 #include "Display.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
+#include <bluefruit.h>  // Add this line
 
 // only include each font once
 #include <Arimo_VariableFont_wght25pt7b.h>
@@ -34,11 +35,47 @@ String      lastDisplayAlternate = "";
 bool        displayNeedsUpdate   = false;
 
 extern Adafruit_ILI9341 tft;
+extern Mode lastMode;   // Add this line if it's not already declared elsewhere
+
 
 #define TFT_CS   27
 #define TFT_DC   25
 #define TFT_RST  26
 Adafruit_ILI9341 tft(TFT_CS, TFT_DC, TFT_RST);
+
+
+void handleModeDisplay() {
+  static unsigned long lastModeUpdate = 0;
+  static bool modeDisplayVisible = false;
+  
+  // Show mode indicator for 2 seconds after mode change
+  if (currentMode != lastMode || (millis() - lastModeUpdate < 2000)) {
+    if (!modeDisplayVisible || currentMode != lastMode) {
+      // Draw mode indicator
+      tft.fillRect(220, 5, 95, 20, ILI9341_BLACK);
+      tft.setFont();
+      tft.setTextSize(1);
+      tft.setTextColor(currentMode == MODE_CALCULATOR ? ILI9341_WHITE : ILI9341_CYAN);
+      tft.setCursor(225, 10);
+      tft.print(currentMode == MODE_CALCULATOR ? "CALC" : "NUMPAD");
+      
+      // Show connection status for numberpad mode
+      if (currentMode == MODE_NUMBERPAD) {
+        tft.setTextColor(Bluefruit.connected() ? ILI9341_GREEN : ILI9341_RED);
+        tft.setCursor(225, 20);
+        tft.print(Bluefruit.connected() ? "CONN" : "DISC");
+      }
+      
+      modeDisplayVisible = true;
+      lastModeUpdate = millis();
+    }
+  } else if (modeDisplayVisible) {
+    // Clear mode indicator
+    tft.fillRect(220, 5, 95, 25, backgroundColor);
+    modeDisplayVisible = false;
+  }
+}
+
 
 void clearDisplayArea() {
   // erase the whole calculator window
