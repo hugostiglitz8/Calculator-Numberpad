@@ -15,6 +15,13 @@
 #include <Arimo_VariableFont_wght5pt7b.h>
 #include <Arimo_VariableFont_wght3pt7b.h>
 
+#define ILI9341_RUBY 0x8800 
+//#define ILI9341_BACKGROUND 0x662C
+
+const uint16_t ruby = ILI9341_RUBY;
+const uint16_t backgroundColor = 0x4208;
+//const uint16_t backgroundColor = 0x31A6;
+
 const int   displayX             = 0;
 const int   displayY             = 30;
 const int   displayW             = 320;
@@ -53,12 +60,12 @@ void clearDisplayArea() {
 
                                                                       // --- drawInitialDisplay() ---
 void drawInitialDisplay() {
-  tft.fillScreen(ILI9341_BLACK);
+  tft.fillScreen(backgroundColor); //          Background
   // outline the display
-  tft.drawRect(displayX, displayY, displayW, displayH, ILI9341_WHITE);
+  tft.drawLine(displayX, displayY, displayW, displayY, ILI9341_WHITE);
 
   // *** Title Bar (use your 15-pt font) ***
-  tft.setFont(&Arimo_VariableFont_wght15pt7b); //                                         FONT:title 
+  tft.setFont(&Arimo_VariableFont_wght7pt7b); //                                         FONT:title 
   tft.setTextSize(1);
   tft.setTextColor(ILI9341_WHITE);
   tft.setCursor(5, 20);
@@ -72,12 +79,12 @@ void updateDisplay() {
   // 1) Main calculation line (use your 25-pt font)
   if (calcLine != lastDisplayCalc) {
     const int calcY = 160, calcH = 40;
-    tft.fillRect(displayX + 2, calcY, displayW - 4, calcH, ILI9341_WHITE);
+    tft.fillRect(displayX + 2, calcY, displayW - 4, calcH, backgroundColor); //background
 
     if (calcLine.length()) {
-      tft.setFont(&Arimo_VariableFont_wght10pt7b); //                                 FONT: Main
+      tft.setFont(&Arimo_VariableFont_wght15pt7b); //                                 FONT: Main
       tft.setTextSize(1);
-      tft.setTextColor(ILI9341_BLACK);
+      tft.setTextColor(ILI9341_WHITE);
       int16_t x, y;
       uint16_t w, h;
       tft.getTextBounds(calcLine, 0, 0, &x, &y, &w, &h);
@@ -96,11 +103,11 @@ void updateDisplay() {
   // 2) History line (use your 20-pt font)
   if (historyLine != lastDisplayHistory && historyLine.length()) {
     const int histY = 40, histH = 25;
-    tft.fillRect(displayX + 2, histY, displayW - 4, histH, ILI9341_WHITE);
+    tft.fillRect(displayX + 2, histY, displayW - 4, histH, backgroundColor); //background
 
     tft.setFont(&Arimo_VariableFont_wght12pt7b); //                           FONT: History
     tft.setTextSize(1);
-    tft.setTextColor(ILI9341_DARKGREY);
+    tft.setTextColor(ILI9341_RUBY);
     int16_t x, y;
     uint16_t w, h;
     tft.getTextBounds(historyLine, 0, 0, &x, &y, &w, &h);
@@ -117,7 +124,7 @@ void updateDisplay() {
   // 3) Alternate result (use your 12-pt font)
   if (alternateDisplay != lastDisplayAlternate && alternateDisplay.length()) {
     const int altY = 100, altH = 25;
-    tft.fillRect(displayX + 2, altY, displayW - 4, altH, ILI9341_WHITE);
+    tft.fillRect(displayX + 2, altY, displayW - 4, altH, backgroundColor); //background
 
     tft.setFont(&Arimo_VariableFont_wght12pt7b); //                         FONT: Alternate 
     tft.setTextSize(1);
