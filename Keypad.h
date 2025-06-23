@@ -59,4 +59,9 @@ void initNumberpad();
 void startNumberpadAdvertising();
 void stopNumberpadAdvertising();
 
+// ── Answer memory functions (from CalculatorLogic.ino) ──
+String getStoredAnswer();
+bool hasCalculatorAnswer();
+void clearStoredAnswer();
+
 #endif // KEYPAD_H

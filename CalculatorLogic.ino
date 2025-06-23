@@ -10,6 +10,10 @@ Fraction currentFraction(0,1), storedFraction(0,1);
 enum Operation { OP_NONE, OP_ADD, OP_SUBTRACT, OP_MULTIPLY, OP_DIVIDE };
 Operation currentOperation = OP_NONE;
 
+// Answer memory for numberpad mode
+String lastAnswer = "";
+bool hasStoredAnswer = false;
+
 void clearAll() {
   calcLine = "";
   historyLine = "";
@@ -19,6 +23,7 @@ void clearAll() {
   storedFraction = Fraction(0, 1);
   currentOperation = OP_NONE;
   usedFractionEntry = false;
+  // Don't clear lastAnswer - keep it available for numberpad mode
   // Clear display area
   clearDisplayArea();
 }
@@ -56,15 +61,27 @@ void handleCalculatorMode(const char* key) {
   if (strcmp(key, "MM") == 0) {
     if (calcLine.length()) {
       Decimal val = evaluateDecimalExpression(calcLine);
+      
+      // Store the pure decimal value BEFORE adding units
+      lastAnswer = val.toString();
+      hasStoredAnswer = true;
+      
       if (zeroHoldActive) {
         Decimal inches = val / Dec("25.4");
         calcLine = inches.toString() + " in";
+        // Update stored answer to the converted value (without units)
+        lastAnswer = inches.toString();
       } else {
         Decimal mm = val * Dec("25.4");
         calcLine = mm.toString() + " mm";
+        // Update stored answer to the converted value (without units)
+        lastAnswer = mm.toString();
       }
       justCalculated = true;
       zeroHoldActive = false;  // reset
+      
+      Serial.print("MM conversion - Answer stored for numberpad: ");
+      Serial.println(lastAnswer);
     }
     return;
   }
@@ -75,13 +92,22 @@ void handleCalculatorMode(const char* key) {
       if (containsFraction(calcLine)) {
         Decimal v = evaluateDecimalExpression(calcLine);
         calcLine = v.toString();
+        // Store the decimal version
+        lastAnswer = v.toString();
+        hasStoredAnswer = true;
       } else {
         Decimal v = evaluateDecimalExpression(calcLine);
         double doubleVal = v.toDouble();
         Fraction f = decimalToSixtyFourths(doubleVal);
         calcLine = formatMixedFraction(f);
+        // Always store the decimal version, even when displaying fraction
+        lastAnswer = v.toString();
+        hasStoredAnswer = true;
       }
       justCalculated = true;
+      
+      Serial.print("Round conversion - Answer stored for numberpad: ");
+      Serial.println(lastAnswer);
     }
     return;
   }
@@ -123,6 +149,10 @@ void handleCalculatorMode(const char* key) {
       Decimal ans = evaluateDecimalExpression(expr);
       historyLine = expr;
 
+      // ALWAYS store the pure decimal answer for numberpad mode
+      lastAnswer = ans.toString();
+      hasStoredAnswer = true;
+
       if (usedFractionEntry) {
         double doubleAns = ans.toDouble();
         Fraction f = decimalToSixtyFourths(doubleAns);
@@ -146,9 +176,27 @@ void handleCalculatorMode(const char* key) {
 
       justCalculated = true;
       usedFractionEntry = false;
+      
+      Serial.print("Answer stored for numberpad: ");
+      Serial.println(lastAnswer);
     }
     return;
   }
+}
+
+// Getter function for numberpad mode to access stored answer
+String getStoredAnswer() {
+  return hasStoredAnswer ? lastAnswer : "";
+}
+
+bool hasCalculatorAnswer() {
+  return hasStoredAnswer;
+}
+
+// Clear stored answer (optional - for if you want to clear it after use)
+void clearStoredAnswer() {
+  hasStoredAnswer = false;
+  lastAnswer = "";
 }
 
 // Legacy functions kept for fraction support

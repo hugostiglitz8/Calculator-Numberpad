@@ -26,13 +26,13 @@ volatile uint8_t  keyHead = 0, keyTail = 0;
 unsigned long zeroPressStart = 0;
 bool          zeroPressed    = false;
 bool          zeroHoldActive = false;
-const unsigned long zeroHoldThreshold = 250;  // ms
+const unsigned long zeroHoldThreshold = 175;  // ms
 
 // ── Slash-hold state (ONLY DEFINED HERE) ──
 unsigned long slashPressStart = 0;
 bool          slashPressed    = false;
 bool          slashHoldActive = false;
-const unsigned long slashHoldThreshold = 250;  // ms
+const unsigned long slashHoldThreshold = 175;  // ms
 
 // ── Debounce timing ──
 volatile uint32_t lastKeyTime[5][5] = { {0} };

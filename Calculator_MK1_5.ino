@@ -61,13 +61,13 @@ void loop() {
   detectZeroHold();
    detectSlashHold(); 
   checkModeSwitch();
-  debugSwitch(); 
+  //debugSwitch(); 
   processKeyBuffer();
   handleDisplay();
   handleModeDisplay();
 }
 
-void debugSwitch() {
+/*void debugSwitch() {
   static unsigned long lastDebug = 0;
   
   // Print switch state every 500ms
@@ -79,7 +79,7 @@ void debugSwitch() {
     Serial.println(currentMode == MODE_CALCULATOR ? "CALC" : "NUMPAD");
     lastDebug = millis();
   }
-}
+}*/
 
 void checkModeSwitch() {
   bool currentSwitchState = digitalRead(MODE_SWITCH_PIN);
