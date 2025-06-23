@@ -2,6 +2,7 @@
 #include <Adafruit_ILI9341.h>
 #include <bluefruit.h>
 #include "Fraction.h"
+#include "DecimalMath.h"  // Add decimal math support
 #include "Keypad.h"
 #include "Display.h"
 
@@ -42,9 +43,17 @@ void setup() {
   // Check initial mode
   checkModeSwitch();
   
-  Serial.println("Ready - Calculator/Numberpad");
+  Serial.println("Ready - Calculator/Numberpad with Decimal Math");
   Serial.print("Initial mode: ");
   Serial.println(currentMode == MODE_CALCULATOR ? "Calculator" : "Numberpad");
+  
+  // Test decimal math on startup
+  Serial.println("Testing decimal math:");
+  Decimal test1 = Dec("21.03");
+  Decimal test2 = Dec("14.567");
+  Decimal result = test1 + test2;
+  Serial.print("21.03 + 14.567 = ");
+  Serial.println(result.toString());
 }
 
 void loop() {
@@ -112,4 +121,3 @@ void checkModeSwitch() {
   
   lastSwitchState = currentSwitchState;
 }
-

@@ -1,9 +1,7 @@
-//Calculator.ino
+//CalculatorLogic.ino
 #include "Display.h"
 #include "Keypad.h"
-
-
-
+#include "DecimalMath.h"
 
 // calculator state
 String historyLine="", calcLine="", alternateDisplay="";
@@ -11,10 +9,6 @@ bool justCalculated=false, usedFractionEntry=false;
 Fraction currentFraction(0,1), storedFraction(0,1);
 enum Operation { OP_NONE, OP_ADD, OP_SUBTRACT, OP_MULTIPLY, OP_DIVIDE };
 Operation currentOperation = OP_NONE;
-
-
-
-
 
 void clearAll() {
   calcLine = "";
@@ -28,13 +22,6 @@ void clearAll() {
   // Clear display area
   clearDisplayArea();
 }
-
-
-
-
-
-
-
 
 void handleCalculatorMode(const char* key) {
   // Quick aliases
@@ -68,13 +55,13 @@ void handleCalculatorMode(const char* key) {
   // MM ↔ in modifier
   if (strcmp(key, "MM") == 0) {
     if (calcLine.length()) {
-      double val = evaluateExpression(calcLine);
+      Decimal val = evaluateDecimalExpression(calcLine);
       if (zeroHoldActive) {
-        double inches = val / 25.4;
-        calcLine = formatAnswer(inches) + " in";
+        Decimal inches = val / Dec("25.4");
+        calcLine = inches.toString() + " in";
       } else {
-        double mm = val * 25.4;
-        calcLine = formatAnswer(mm) + " mm";
+        Decimal mm = val * Dec("25.4");
+        calcLine = mm.toString() + " mm";
       }
       justCalculated = true;
       zeroHoldActive = false;  // reset
@@ -86,11 +73,12 @@ void handleCalculatorMode(const char* key) {
   if (strcmp(key, "round") == 0) {
     if (calcLine.length()) {
       if (containsFraction(calcLine)) {
-        double v = evaluateExpression(calcLine);
-        calcLine = formatAnswer(v);
+        Decimal v = evaluateDecimalExpression(calcLine);
+        calcLine = v.toString();
       } else {
-        double v = evaluateExpression(calcLine);
-        Fraction f = decimalToSixtyFourths(v);
+        Decimal v = evaluateDecimalExpression(calcLine);
+        double doubleVal = v.toDouble();
+        Fraction f = decimalToSixtyFourths(doubleVal);
         calcLine = formatMixedFraction(f);
       }
       justCalculated = true;
@@ -132,22 +120,24 @@ void handleCalculatorMode(const char* key) {
   if (strcmp(key, "return") == 0) {
     if (calcLine.length() && !justCalculated) {
       String expr = calcLine;
-      double ans = evaluateExpression(expr);
+      Decimal ans = evaluateDecimalExpression(expr);
       historyLine = expr;
 
       if (usedFractionEntry) {
-        Fraction f = decimalToSixtyFourths(ans);
-        if (ans == f.toDecimal()) {
+        double doubleAns = ans.toDouble();
+        Fraction f = decimalToSixtyFourths(doubleAns);
+        if (abs(doubleAns - f.toDecimal()) < 0.000001) {
           calcLine = formatMixedFraction(f);
-          alternateDisplay = formatAnswer(ans);
+          alternateDisplay = ans.toString();
         } else {
-          calcLine = formatAnswer(ans);
+          calcLine = ans.toString();
           alternateDisplay = "";
         }
       } else {
-        calcLine = formatAnswer(ans);
-        Fraction f = decimalToSixtyFourths(ans);
-        if (ans == f.toDecimal()) {
+        calcLine = ans.toString();
+        double doubleAns = ans.toDouble();
+        Fraction f = decimalToSixtyFourths(doubleAns);
+        if (abs(doubleAns - f.toDecimal()) < 0.000001) {
           alternateDisplay = formatMixedFraction(f);
         } else {
           alternateDisplay = "";
@@ -161,66 +151,26 @@ void handleCalculatorMode(const char* key) {
   }
 }
 
-
-
-
-
-
-
-
-// Expression evaluator & helpers
+// Legacy functions kept for fraction support
 double evaluateExpression(const String& expr) {
-  
-  String s = expr;
-  s.replace("x", "*");
-  double result = 0;
-  char op = '+';
-  int start = 0;
-  for (int i = 0; i <= s.length(); i++) {
-    char c = (i < s.length()) ? s[i] : '\0';
-    bool isOp = (c == '+' || c == '-' || c == '*' || c == '\0');
-    if (isOp) {
-      if (i > start) {
-        String tok = s.substring(start, i);
-        double val = parseMixedFractionValue(tok);
-        switch (op) {
-          case '+': result += val; break;
-          case '-': result -= val; break;
-          case '*': result *= val; break;
-          case '/':
-            if (val != 0) result /= val;
-            break;
-        }
-      }
-      op = c;
-      start = i + 1;
-    }
-  }
-  return result;
+  Decimal result = evaluateDecimalExpression(expr);
+  return result.toDouble();
 }
-
-
-
 
 double parseMixedFractionValue(const String& token) {
-  int sp = token.indexOf(' ');
-  if (sp >= 0) {
-    double whole = token.substring(0, sp).toFloat();
-    double frac = parseFraction(token.substring(sp + 1));
-    return (whole < 0) ? whole - frac : whole + frac;
-  }
-  if (token.indexOf('/') >= 0) return parseFraction(token);
-  return token.toFloat();
+  Decimal result = parseMixedFractionDecimal(token);
+  return result.toDouble();
 }
-
-
-
 
 double parseFraction(const String& frac) {
   int slash = frac.indexOf('/');
-  double n = frac.substring(0, slash).toFloat();
-  double d = frac.substring(slash + 1).toFloat();
-  return (d == 0) ? 0 : n / d;
+  if (slash == -1) return frac.toFloat();
+  
+  Decimal n = Dec(frac.substring(0, slash));
+  Decimal d = Dec(frac.substring(slash + 1));
+  
+  if (d.isZero()) return 0;
+  return (n / d).toDouble();
 }
 
 bool containsFraction(const String& expr) {
@@ -229,14 +179,11 @@ bool containsFraction(const String& expr) {
 }
 
 String formatAnswer(double v) {
-  if (abs(v - round(v)) < 0.001) return String((long)round(v));
-  String out = String(v, 8);
-  while (out.endsWith("0")) out.remove(out.length() - 1);
-  if (out.endsWith(".")) out.remove(out.length() - 1);
-  return out;
+  // This function is now deprecated in favor of Decimal.toString()
+  // But kept for backward compatibility with fraction code
+  Decimal d = Dec(v);
+  return d.toString();
 }
-
-
 
 inline bool isNumber(const char* k) {
   return (k[0] >= '0' && k[0] <= '9');
@@ -244,4 +191,3 @@ inline bool isNumber(const char* k) {
 inline bool isOperator(const char* k) {
   return (k[0] == '+' || k[0] == '-' || k[0] == '*' || k[0] == '/');
 }
-
