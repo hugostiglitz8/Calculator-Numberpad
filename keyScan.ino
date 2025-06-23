@@ -11,7 +11,7 @@ const uint8_t rowPins[5] = { 31, 11, 7, 15, 16 };
 
 // Keymap
 const char* keymap[5][5] = {
-  { "AC", ">", "x/y", "/", "Del" },
+  { "AC", "x/y", ">", "/", "Del" },
   { "7", "8", "9", "x", "MM" },
   { "4", "5", "6", "-", "round" },
   { "1", "2", "3", "+", "return" },
@@ -26,13 +26,13 @@ volatile uint8_t  keyHead = 0, keyTail = 0;
 unsigned long zeroPressStart = 0;
 bool          zeroPressed    = false;
 bool          zeroHoldActive = false;
-const unsigned long zeroHoldThreshold = 500;  // ms
+const unsigned long zeroHoldThreshold = 250;  // ms
 
-// ── Slash-hold state ──
+// ── Slash-hold state (ONLY DEFINED HERE) ──
 unsigned long slashPressStart = 0;
 bool          slashPressed    = false;
 bool          slashHoldActive = false;
-const unsigned long slashHoldThreshold = 500;  // ms
+const unsigned long slashHoldThreshold = 250;  // ms
 
 // ── Debounce timing ──
 volatile uint32_t lastKeyTime[5][5] = { {0} };
@@ -92,6 +92,7 @@ void keyScan() {
             }
           }
           zeroPressed = false;
+          zeroHoldActive = false; // Reset when released
         }
         // Slash key release
         else if (r == 0 && c == 3) {
@@ -121,6 +122,7 @@ void detectZeroHold() {
   if (zeroPressed && !zeroHoldActive
       && millis() - zeroPressStart > zeroHoldThreshold) {
     zeroHoldActive = true;
+    Serial.println("Zero hold activated - MM/IN mode");
   }
 }
 
@@ -129,7 +131,7 @@ void detectSlashHold() {
   if (slashPressed && !slashHoldActive
       && millis() - slashPressStart > slashHoldThreshold) {
     slashHoldActive = true;
-    Serial.println("Shift mode activated");
+    Serial.println("Slash hold activated - Shift mode");
   }
 }
 

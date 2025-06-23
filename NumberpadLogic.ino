@@ -6,12 +6,6 @@ BLEDis bledis;
 BLEHidAdafruit blehid;
 bool bleInitialized = false;
 
-// Shift hold state (similar to zero hold)
-unsigned long slashPressStart = 0;
-bool slashPressed = false;
-bool slashHoldActive = false;
-const unsigned long slashHoldThreshold = 500;  // 500ms hold for shift mode
-
 // Keycode mapping for HID (standard USB HID keycodes)
 const uint8_t keyHIDMap[5][5] = {
   { HID_KEY_ESCAPE, HID_KEY_ARROW_LEFT, HID_KEY_ARROW_RIGHT, HID_KEY_KEYPAD_DIVIDE, HID_KEY_BACKSPACE },      // AC=ESC, >=LEFT, x/y=RIGHT, /, Del=BACKSPACE
