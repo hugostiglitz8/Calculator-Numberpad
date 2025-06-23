@@ -11,7 +11,7 @@ const uint8_t rowPins[5] = { 31, 11, 7, 15, 16 };
 
 // Keymap
 const char* keymap[5][5] = {
-  { "AC", "x/y", ">", "/", "Del" },
+  { "AC", ">", "x/y", "/", "Del" },
   { "7", "8", "9", "x", "MM" },
   { "4", "5", "6", "-", "round" },
   { "1", "2", "3", "+", "return" },
@@ -26,13 +26,13 @@ volatile uint8_t  keyHead = 0, keyTail = 0;
 unsigned long zeroPressStart = 0;
 bool          zeroPressed    = false;
 bool          zeroHoldActive = false;
-const unsigned long zeroHoldThreshold = 200;  // ms
+const unsigned long zeroHoldThreshold = 500;  // ms
 
 // ── Slash-hold state ──
 unsigned long slashPressStart = 0;
 bool          slashPressed    = false;
 bool          slashHoldActive = false;
-const unsigned long slashHoldThreshold = 200;  // ms
+const unsigned long slashHoldThreshold = 500;  // ms
 
 // ── Debounce timing ──
 volatile uint32_t lastKeyTime[5][5] = { {0} };

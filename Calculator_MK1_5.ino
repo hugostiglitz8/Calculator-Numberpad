@@ -59,6 +59,7 @@ void setup() {
 void loop() {
   keyScan();
   detectZeroHold();
+   detectSlashHold(); 
   checkModeSwitch();
   debugSwitch(); 
   processKeyBuffer();
